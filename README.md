@@ -4,6 +4,8 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 
 ![macOS](https://img.shields.io/badge/macOS-14%2B-blue) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![SwiftUI](https://img.shields.io/badge/SwiftUI-Charts-green)
 
+![Vibe Helper Dashboard](assets/screenshot.png)
+
 ## Features
 
 - **Cost Tracking** — Cumulative spend over time, average cost per session, cost by project
