@@ -38,7 +38,7 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 Requires Xcode 15+ (or just the Command Line Tools with Swift 5.9+).
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/vibe-helper.git
+git clone https://github.com/ahh1539/vibe-helper.git
 cd vibe-helper
 swift build -c release
 open .build/release/VibeHelper
