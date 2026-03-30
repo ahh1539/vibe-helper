@@ -3,6 +3,7 @@ import SwiftUI
 struct SessionDetailView: View {
     let session: Session
     @Environment(\.dismiss) private var dismiss
+    @State private var showingReplay = false
 
     var body: some View {
         ScrollView {
@@ -23,6 +24,16 @@ struct SessionDetailView: View {
                         .foregroundStyle(.secondary)
                     }
                     Spacer()
+                    Button {
+                        showingReplay = true
+                    } label: {
+                        Label("Replay", systemImage: "play.circle")
+                            .font(.callout)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.vibePrimary)
+                    .disabled(session.directoryURL == nil)
+
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
@@ -55,27 +66,9 @@ struct SessionDetailView: View {
                         .font(.headline)
 
                     HStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Prompt Tokens")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(session.stats.sessionPromptTokens.formattedTokenCount)
-                                .font(.title3.weight(.medium))
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Completion Tokens")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(session.stats.sessionCompletionTokens.formattedTokenCount)
-                                .font(.title3.weight(.medium))
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Total LLM Tokens")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(session.stats.sessionTotalLlmTokens.formattedTokenCount)
-                                .font(.title3.weight(.medium))
-                        }
+                        LabeledValue(label: "Prompt Tokens", value: session.stats.sessionPromptTokens.formattedTokenCount, valueFont: .title3.weight(.medium))
+                        LabeledValue(label: "Completion Tokens", value: session.stats.sessionCompletionTokens.formattedTokenCount, valueFont: .title3.weight(.medium))
+                        LabeledValue(label: "Total LLM Tokens", value: session.stats.sessionTotalLlmTokens.formattedTokenCount, valueFont: .title3.weight(.medium))
                     }
                 }
 
@@ -101,20 +94,8 @@ struct SessionDetailView: View {
                     Text("Pricing")
                         .font(.headline)
                     HStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Input Price")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(String(format: "$%.2f / 1M tokens", session.stats.inputPricePerMillion))
-                                .font(.body)
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Output Price")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(String(format: "$%.2f / 1M tokens", session.stats.outputPricePerMillion))
-                                .font(.body)
-                        }
+                        LabeledValue(label: "Input Price", value: String(format: "$%.2f / 1M tokens", session.stats.inputPricePerMillion))
+                        LabeledValue(label: "Output Price", value: String(format: "$%.2f / 1M tokens", session.stats.outputPricePerMillion))
                     }
                 }
 
@@ -125,44 +106,65 @@ struct SessionDetailView: View {
                     Text("Timing")
                         .font(.headline)
                     HStack(spacing: 20) {
+                        LabeledValue(label: "Started", value: session.startTime.shortFormatted)
+                        LabeledValue(label: "Ended", value: session.endTime.shortFormatted)
+                        LabeledValue(label: "Last Turn", value: String(format: "%.1fs", session.stats.lastTurnDuration))
+                    }
+                }
+
+                Divider()
+
+                // Model
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Model")
+                        .font(.headline)
+                    HStack(spacing: 20) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Started")
+                            Text("Active Model")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(session.startTime.shortFormatted)
-                                .font(.body)
+                            Text(session.activeModelName)
+                                .font(.body.weight(.medium))
+                                .foregroundStyle(Color.vibeAccent)
                         }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Ended")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(session.endTime.shortFormatted)
-                                .font(.body)
+                        if let modelDetails = session.config?.models?.first(where: {
+                            $0.alias == session.config?.activeModel
+                        }) {
+                            LabeledValue(label: "Provider", value: modelDetails.provider)
                         }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Last Turn")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(String(format: "%.1fs", session.stats.lastTurnDuration))
-                                .font(.body)
+                        if let profile = session.agentProfileName {
+                            LabeledValue(label: "Agent Profile", value: profile)
                         }
                     }
                 }
 
                 if let commit = session.gitCommit {
                     Divider()
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Git Commit")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(String(commit.prefix(12)))
-                            .font(.system(.body, design: .monospaced))
-                    }
+                    LabeledValue(label: "Git Commit", value: String(commit.prefix(12)), valueFont: .system(.body, design: .monospaced))
                 }
             }
             .padding(24)
         }
         .frame(minWidth: 550, minHeight: 500)
+        .sheet(isPresented: $showingReplay) {
+            SessionReplayView(session: session)
+        }
+    }
+}
+
+struct LabeledValue: View {
+    let label: String
+    let value: String
+    var valueFont: Font = .body
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(valueFont)
+        }
     }
 }
 

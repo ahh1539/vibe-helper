@@ -15,6 +15,8 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 - **Per-Project Filtering** — Filter all stats by project/working directory
 - **Time Range Controls** — Quick presets (Today, 7 Days, 30 Days, All Time) + custom date picker
 - **Session Detail View** — Click any session to drill into full stats, token breakdown, tool calls, and timing
+- **Session Replay** — View the full conversation for any session, including assistant messages and tool calls with expandable arguments
+- **Model Usage** — Pie chart of cost and session count broken down by model
 - **Live Updates** — File system watcher auto-refreshes when new sessions complete
 - **Manual Refresh** — One-click refresh button
 
@@ -69,7 +71,7 @@ Vibe Helper reads session data from the Mistral Vibe CLI's default log directory
 └── ...
 ```
 
-Each session's `meta.json` contains stats like token counts, cost, tool call outcomes, timing, git branch, and working directory. Vibe Helper parses all of these and visualizes them.
+Each session's `meta.json` contains token counts, cost, tool call outcomes, timing, git branch, and working directory. `messages.jsonl` is parsed for session replay.
 
 ### Enabling Session Logging
 
@@ -97,9 +99,11 @@ VibeHelper/
 ├── VibeHelperApp.swift              # App entry point
 ├── Models/
 │   ├── Session.swift                # Codable model for meta.json
+│   ├── SessionMessage.swift         # Codable model for messages.jsonl
 │   └── TimeRange.swift              # Time range filtering enum
 ├── Services/
 │   ├── SessionLoader.swift          # Parses all session meta.json files
+│   ├── MessageLoader.swift          # Parses messages.jsonl for replay
 │   ├── FileWatcher.swift            # FSEvents watcher for live updates
 │   └── SessionStore.swift           # Central data store (ObservableObject)
 ├── Views/
@@ -108,12 +112,14 @@ VibeHelper/
 │   │   ├── CostCard.swift           # Cumulative cost area chart
 │   │   ├── TokenCard.swift          # Input/output token bar chart
 │   │   ├── ActivityCard.swift       # Calendar heatmap
+│   │   ├── ModelUsageCard.swift     # Cost/sessions by model pie chart
 │   │   └── ToolUsageCard.swift      # Tool call donut chart
 │   ├── Controls/
 │   │   ├── TimeRangePickerView.swift
 │   │   └── ProjectFilterView.swift
 │   ├── SessionListView.swift        # Scrollable session list
-│   └── SessionDetailView.swift      # Full session detail sheet
+│   ├── SessionDetailView.swift      # Full session detail sheet
+│   └── SessionReplayView.swift      # Conversation replay
 └── Utilities/
     ├── ColorTheme.swift
     └── DateFormatting.swift

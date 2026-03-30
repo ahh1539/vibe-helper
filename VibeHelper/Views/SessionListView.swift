@@ -23,6 +23,13 @@ struct SessionListView: View {
                             selectedSession = session
                         }
                 }
+                if sessions.count > 20 {
+                    Text("\(sessions.count - 20) more sessions not shown")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 4)
+                }
             }
         }
         .cardStyle()
@@ -58,6 +65,14 @@ struct SessionRow: View {
                 .padding(.vertical, 3)
                 .background(Color.vibePrimary.opacity(0.1))
                 .foregroundStyle(Color.vibePrimary)
+                .clipShape(Capsule())
+
+            Text(session.activeModelName)
+                .font(.caption)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Color.vibeAccent.opacity(0.1))
+                .foregroundStyle(Color.vibeAccent)
                 .clipShape(Capsule())
 
             Text(session.stats.formattedCost)

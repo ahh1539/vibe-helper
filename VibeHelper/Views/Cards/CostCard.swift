@@ -4,20 +4,29 @@ import Charts
 struct CostCard: View {
     let sessions: [Session]
 
-    private var sortedSessions: [Session] {
-        sessions.sorted { $0.startTime < $1.startTime }
+    @State private var selectedModel: String? = nil
+
+    private var models: [String] {
+        Array(Set(sessions.map { $0.activeModelName })).sorted()
+    }
+
+    private var filteredSessions: [Session] {
+        guard let model = selectedModel else { return sessions }
+        return sessions.filter { $0.activeModelName == model }
     }
 
     private var totalCost: Double {
-        sessions.reduce(0) { $0 + $1.stats.sessionCost }
+        filteredSessions.reduce(0) { $0 + $1.stats.sessionCost }
     }
 
     private var cumulativeCosts: [(date: Date, cost: Double)] {
         var running = 0.0
-        return sortedSessions.map { session in
-            running += session.stats.sessionCost
-            return (date: session.startTime, cost: running)
-        }
+        return filteredSessions
+            .sorted { $0.startTime < $1.startTime }
+            .map { session in
+                running += session.stats.sessionCost
+                return (date: session.startTime, cost: running)
+            }
     }
 
     var body: some View {
@@ -33,13 +42,28 @@ struct CostCard: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(sessions.count) sessions")
+                    Text("\(filteredSessions.count) sessions")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    if !sessions.isEmpty {
-                        Text("avg \(String(format: "$%.2f", totalCost / Double(sessions.count)))/session")
+                    if !filteredSessions.isEmpty {
+                        Text("avg \(String(format: "$%.2f", totalCost / Double(filteredSessions.count)))/session")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if models.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ModelPill(label: "All", isSelected: selectedModel == nil) {
+                            selectedModel = nil
+                        }
+                        ForEach(models, id: \.self) { model in
+                            ModelPill(label: model, isSelected: selectedModel == model) {
+                                selectedModel = selectedModel == model ? nil : model
+                            }
+                        }
                     }
                 }
             }
@@ -92,5 +116,28 @@ struct CostCard: View {
             }
         }
         .cardStyle()
+    }
+}
+
+private struct ModelPill: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption.weight(isSelected ? .semibold : .regular))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(isSelected ? Color.vibePrimary.opacity(0.15) : Color.primary.opacity(0.05))
+                .foregroundStyle(isSelected ? Color.vibePrimary : Color.secondary)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.vibePrimary.opacity(0.4) : Color.clear, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 }

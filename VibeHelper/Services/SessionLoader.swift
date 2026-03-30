@@ -4,6 +4,18 @@ struct SessionLoader {
     static let sessionDirectory = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".vibe/logs/session")
 
+    private static let dateFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    private static let fallbackDateFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
     static func loadAllSessions() async -> [Session] {
         let fileManager = FileManager.default
         let baseURL = sessionDirectory
@@ -19,18 +31,13 @@ struct SessionLoader {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let fallbackFormatter = ISO8601DateFormatter()
-        fallbackFormatter.formatOptions = [.withInternetDateTime]
-
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) {
+            if let date = SessionLoader.dateFormatter.date(from: dateString) {
                 return date
             }
-            if let date = fallbackFormatter.date(from: dateString) {
+            if let date = SessionLoader.fallbackDateFormatter.date(from: dateString) {
                 return date
             }
             throw DecodingError.dataCorruptedError(
@@ -47,7 +54,8 @@ struct SessionLoader {
 
             do {
                 let data = try Data(contentsOf: metaURL)
-                let session = try decoder.decode(Session.self, from: data)
+                var session = try decoder.decode(Session.self, from: data)
+                session.directoryURL = url
                 sessions.append(session)
             } catch {
                 print("Failed to parse \(metaURL.path): \(error)")

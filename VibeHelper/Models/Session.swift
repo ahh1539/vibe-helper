@@ -1,5 +1,23 @@
 import Foundation
 
+struct SessionModelConfig: Codable {
+    let name: String
+    let provider: String
+    let alias: String?
+    let temperature: Double?
+    let inputPrice: Double?
+    let outputPrice: Double?
+}
+
+struct SessionConfig: Codable {
+    let activeModel: String
+    let models: [SessionModelConfig]?
+}
+
+struct SessionAgentProfile: Codable {
+    let name: String
+}
+
 struct Session: Codable, Identifiable {
     let sessionId: String
     let startTime: Date
@@ -11,8 +29,26 @@ struct Session: Codable, Identifiable {
     let stats: SessionStats
     let title: String?
     let totalMessages: Int
+    let config: SessionConfig?
+    let agentProfile: SessionAgentProfile?
+    var directoryURL: URL?
 
     var id: String { sessionId }
+
+    private enum CodingKeys: String, CodingKey {
+        case sessionId, startTime, endTime, gitCommit, gitBranch
+        case environment, username, stats, title, totalMessages
+        case config, agentProfile
+    }
+
+    var activeModelName: String {
+        config?.activeModel ?? "unknown"
+    }
+
+    var agentProfileName: String? {
+        guard let name = agentProfile?.name, name != "default" else { return nil }
+        return name
+    }
 
     var projectName: String {
         (environment.workingDirectory as NSString).lastPathComponent
