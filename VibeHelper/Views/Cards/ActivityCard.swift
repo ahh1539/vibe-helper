@@ -64,10 +64,10 @@ struct ActivityCard: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("avg \(formatDuration(avgDuration))")
+                    Text("avg \(avgDuration.formattedDuration())")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("total \(formatDuration(totalDuration))")
+                    Text("total \(totalDuration.formattedDuration())")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -95,9 +95,10 @@ struct ActivityCard: View {
                         }
                     }
                 }
-                .frame(height: 120)
+                .frame(maxHeight: .infinity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .cardStyle()
     }
 
@@ -111,14 +112,7 @@ struct ActivityCard: View {
         }
     }
 
-    private func formatDuration(_ interval: TimeInterval) -> String {
-        let hours = Int(interval) / 3600
-        let minutes = (Int(interval) % 3600) / 60
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
-        }
-        return "\(minutes)m"
-    }
+
 }
 
 private struct DayCell {

@@ -112,9 +112,10 @@ struct CostCard: View {
                         }
                     }
                 }
-                .frame(height: 140)
+                .frame(maxHeight: .infinity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .cardStyle()
     }
 }

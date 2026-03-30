@@ -70,7 +70,7 @@ struct ToolUsageCard: View {
                     .foregroundStyle(item.color)
                     .cornerRadius(3)
                 }
-                .frame(height: 120)
+                .frame(maxHeight: .infinity)
 
                 HStack(spacing: 16) {
                     ForEach(chartData) { item in
@@ -86,6 +86,7 @@ struct ToolUsageCard: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .cardStyle()
     }
 }

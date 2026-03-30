@@ -18,7 +18,7 @@ struct SessionAgentProfile: Codable {
     let name: String
 }
 
-struct Session: Codable, Identifiable {
+struct Session: Codable, Identifiable, Equatable {
     let sessionId: String
     let startTime: Date
     let endTime: Date
@@ -41,6 +41,10 @@ struct Session: Codable, Identifiable {
         case config, agentProfile
     }
 
+    static func == (lhs: Session, rhs: Session) -> Bool {
+        return lhs.sessionId == rhs.sessionId
+    }
+
     var activeModelName: String {
         config?.activeModel ?? "unknown"
     }
@@ -59,12 +63,7 @@ struct Session: Codable, Identifiable {
     }
 
     var formattedDuration: String {
-        let minutes = Int(duration) / 60
-        let seconds = Int(duration) % 60
-        if minutes > 0 {
-            return "\(minutes)m \(seconds)s"
-        }
-        return "\(seconds)s"
+        duration.formattedDuration()
     }
 }
 
@@ -100,11 +99,6 @@ struct SessionStats: Codable {
     }
 
     var formattedTokens: String {
-        if sessionTotalLlmTokens >= 1_000_000 {
-            return String(format: "%.1fM", Double(sessionTotalLlmTokens) / 1_000_000)
-        } else if sessionTotalLlmTokens >= 1_000 {
-            return String(format: "%.1fK", Double(sessionTotalLlmTokens) / 1_000)
-        }
-        return "\(sessionTotalLlmTokens)"
+        sessionTotalLlmTokens.formattedTokenCount
     }
 }

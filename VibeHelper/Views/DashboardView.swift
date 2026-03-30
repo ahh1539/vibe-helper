@@ -61,12 +61,14 @@ struct DashboardView: View {
                         CostCard(sessions: store.filteredSessions)
                         TokenCard(sessions: store.filteredSessions)
                     }
+                    .frame(height: 280)
 
                     // Second row: Activity + Tool Usage
                     HStack(spacing: 16) {
                         ActivityCard(sessions: store.filteredSessions)
                         ToolUsageCard(sessions: store.filteredSessions)
                     }
+                    .frame(height: 280)
 
                     // Session list
                     SessionListView(

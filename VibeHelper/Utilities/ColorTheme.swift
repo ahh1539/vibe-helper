@@ -22,13 +22,7 @@ extension Color {
                 : NSColor(red: 0.30, green: 0.50, blue: 0.95, alpha: 1.0)
         }
     )
-    static let vibeSecondary = Color(
-        nsColor: NSColor(name: nil) { appearance in
-            appearance.bestMatch(from: [.darkAqua, .vibrantDark]) != nil
-                ? NSColor(red: 0.55, green: 0.75, blue: 1.0, alpha: 1.0)
-                : NSColor(red: 0.45, green: 0.65, blue: 0.95, alpha: 1.0)
-        }
-    )
+
     static let vibeAccent = Color(
         nsColor: NSColor(name: nil) { appearance in
             appearance.bestMatch(from: [.darkAqua, .vibrantDark]) != nil

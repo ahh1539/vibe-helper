@@ -13,7 +13,7 @@ final class FileWatcher {
     func start() {
         let fd = open(path, O_EVTONLY)
         guard fd >= 0 else {
-            print("FileWatcher: Unable to open \(path)")
+            print("FileWatcher: Unable to open \(path): \(String(cString: strerror(errno)))")
             return
         }
 

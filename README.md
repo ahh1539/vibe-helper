@@ -16,7 +16,6 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 - **Time Range Controls** — Quick presets (Today, 7 Days, 30 Days, All Time) + custom date picker
 - **Session Detail View** — Click any session to drill into full stats, token breakdown, tool calls, and timing
 - **Session Replay** — View the full conversation for any session, including assistant messages and tool calls with expandable arguments
-- **Model Usage** — Pie chart of cost and session count broken down by model
 - **Live Updates** — File system watcher auto-refreshes when new sessions complete
 - **Manual Refresh** — One-click refresh button
 
@@ -112,7 +111,6 @@ VibeHelper/
 │   │   ├── CostCard.swift           # Cumulative cost area chart
 │   │   ├── TokenCard.swift          # Input/output token bar chart
 │   │   ├── ActivityCard.swift       # Calendar heatmap
-│   │   ├── ModelUsageCard.swift     # Cost/sessions by model pie chart
 │   │   └── ToolUsageCard.swift      # Tool call donut chart
 │   ├── Controls/
 │   │   ├── TimeRangePickerView.swift

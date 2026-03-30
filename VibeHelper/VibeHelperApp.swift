@@ -15,23 +15,5 @@ struct VibeHelperApp: App {
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 900, height: 700)
-        .commands {
-            CommandGroup(after: .appSettings) {
-                Menu("Appearance") {
-                    ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
-                        Button {
-                            appearanceMode = mode.rawValue
-                        } label: {
-                            HStack {
-                                Text(mode.rawValue)
-                                if appearanceMode == mode.rawValue {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }
