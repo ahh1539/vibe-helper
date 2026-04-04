@@ -10,8 +10,13 @@ struct VibeHelperApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardView()
-                .preferredColorScheme(selectedMode.colorScheme)
+            TabView {
+                DashboardView()
+                    .tabItem { Label("Dashboard", systemImage: "chart.bar") }
+                SkillsListView()
+                    .tabItem { Label("Skills", systemImage: "sparkles") }
+            }
+            .preferredColorScheme(selectedMode.colorScheme)
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 900, height: 700)
