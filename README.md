@@ -8,6 +8,7 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 
 ## Features
 
+### Dashboard & Analytics
 - **Cost Tracking** — Cumulative spend over time, average cost per session, cost by project
 - **Token Analytics** — Input vs output token breakdown, tokens/sec performance trends
 - **Activity Heatmap** — GitHub-style calendar heatmap showing session frequency and duration
@@ -17,7 +18,18 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 - **Session Detail View** — Click any session to drill into full stats, token breakdown, tool calls, and timing
 - **Session Replay** — View the full conversation for any session, including assistant messages and tool calls with expandable arguments
 - **Live Updates** — File system watcher auto-refreshes when new sessions complete
-- **Manual Refresh** — One-click refresh button
+
+### Skill Management
+- **Browse & Search Skills** — View all skills with name, description, enabled status, and allowed tools
+- **Create Skills** — Add new skills with name, description, allowed tools, and markdown instructions
+- **Edit & Delete Skills** — Modify or remove skills with automatic backup before deletion
+- **User Invocable Toggle** — Control whether CLI users can invoke skills directly
+
+### Model & Provider Settings
+- **Model Configuration** — View and edit model settings: alias, provider, temperature, thinking mode, and pricing
+- **Provider Configuration** — Manage API providers: base URL, API key env var, API style, and backend
+- **Safe Config Editing** — Automatic timestamped backups before every save, atomic writes, and post-write validation with auto-restore on failure
+- **Backup & Restore** — Browse and restore previous config backups from within the app
 
 ## Requirements
 
@@ -99,12 +111,16 @@ VibeHelper/
 ├── Models/
 │   ├── Session.swift                # Codable model for meta.json
 │   ├── SessionMessage.swift         # Codable model for messages.jsonl
-│   └── TimeRange.swift              # Time range filtering enum
+│   ├── Skill.swift                  # Skill model with frontmatter parsing
+│   ├── TimeRange.swift              # Time range filtering enum
+│   └── VibeConfig.swift             # Data models + TOML parser for config
 ├── Services/
-│   ├── SessionLoader.swift          # Parses all session meta.json files
-│   ├── MessageLoader.swift          # Parses messages.jsonl for replay
+│   ├── ConfigStore.swift            # Config CRUD + safe backup/restore
 │   ├── FileWatcher.swift            # FSEvents watcher for live updates
-│   └── SessionStore.swift           # Central data store (ObservableObject)
+│   ├── MessageLoader.swift          # Parses messages.jsonl for replay
+│   ├── SessionLoader.swift          # Parses all session meta.json files
+│   ├── SessionStore.swift           # Central data store (ObservableObject)
+│   └── SkillStore.swift             # Skill CRUD and file watching
 ├── Views/
 │   ├── DashboardView.swift          # Main single-window dashboard
 │   ├── Cards/
@@ -115,6 +131,13 @@ VibeHelper/
 │   ├── Controls/
 │   │   ├── TimeRangePickerView.swift
 │   │   └── ProjectFilterView.swift
+│   ├── Settings/
+│   │   ├── ModelsSettingsView.swift  # Model/provider list + backup UI
+│   │   └── ModelEditorView.swift     # Edit forms for models & providers
+│   ├── Skills/
+│   │   ├── SkillsListView.swift      # Skills browser
+│   │   ├── SkillDetailView.swift     # Skill detail/edit/delete
+│   │   └── SkillEditorView.swift     # Create/edit skill form
 │   ├── SessionListView.swift        # Scrollable session list
 │   ├── SessionDetailView.swift      # Full session detail sheet
 │   └── SessionReplayView.swift      # Conversation replay

@@ -63,6 +63,17 @@ if command -v iconutil &> /dev/null && [ -f "scripts/generate-icon.sh" ]; then
     fi
 fi
 
+echo "🔏 Code signing..."
+SIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+if [ "${SIGN_IDENTITY}" = "-" ]; then
+    echo "⚠️  No CODESIGN_IDENTITY set, using ad-hoc signing"
+fi
+codesign --force --deep --options runtime \
+    --sign "${SIGN_IDENTITY}" \
+    "${APP_BUNDLE}"
+codesign --verify --deep --strict "${APP_BUNDLE}"
+echo "✅ Code signing verified"
+
 echo "💿 Creating DMG..."
 rm -rf "${DMG_DIR}"
 mkdir -p "${DMG_DIR}"
