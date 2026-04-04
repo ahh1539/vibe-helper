@@ -111,18 +111,63 @@ final class SkillStore: ObservableObject {
         try fm.createDirectory(at: skill.directoryURL, withIntermediateDirectories: true)
         let content = Skill.serialize(skill)
         try content.write(to: skill.skillFileURL, atomically: true, encoding: .utf8)
+
+        // Validate: re-read and re-parse to confirm the file is valid
+        guard let written = try? String(contentsOf: skill.skillFileURL, encoding: .utf8),
+              let _ = try? Skill.parse(fileContent: written, directoryName: skill.id, directoryURL: skill.directoryURL) else {
+            // Clean up the invalid skill directory
+            try? fm.removeItem(at: skill.directoryURL)
+            throw SkillWriteError.validationFailed("Created SKILL.md could not be parsed back — removed directory")
+        }
+
         Task { await load() }
     }
 
     func updateSkill(_ skill: Skill) throws {
+        // Backup original SKILL.md before overwriting
+        let backupURL = try backupSkillFile(skill)
+
         let content = Skill.serialize(skill)
         try content.write(to: skill.skillFileURL, atomically: true, encoding: .utf8)
+
+        // Validate: re-read and re-parse
+        guard let written = try? String(contentsOf: skill.skillFileURL, encoding: .utf8),
+              let _ = try? Skill.parse(fileContent: written, directoryName: skill.id, directoryURL: skill.directoryURL) else {
+            // Restore from backup
+            try? FileManager.default.removeItem(at: skill.skillFileURL)
+            try? FileManager.default.copyItem(at: backupURL, to: skill.skillFileURL)
+            throw SkillWriteError.validationFailed("Updated SKILL.md was invalid — restored from backup")
+        }
+
         Task { await load() }
     }
 
     func deleteSkill(_ skill: Skill) throws {
-        try FileManager.default.removeItem(at: skill.directoryURL)
+        // Backup the entire skill directory before deleting
+        let fm = FileManager.default
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = formatter.string(from: Date())
+        let backupDir = Self.skillsDirectory
+            .appendingPathComponent(".backups", isDirectory: true)
+        try fm.createDirectory(at: backupDir, withIntermediateDirectories: true)
+        let backupURL = backupDir.appendingPathComponent("\(skill.id).\(timestamp)")
+        try fm.copyItem(at: skill.directoryURL, to: backupURL)
+
+        try fm.removeItem(at: skill.directoryURL)
         Task { await load() }
+    }
+
+    // MARK: - Backup
+
+    private func backupSkillFile(_ skill: Skill) throws -> URL {
+        let fm = FileManager.default
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = formatter.string(from: Date())
+        let backupURL = skill.directoryURL.appendingPathComponent("SKILL.md.bak.\(timestamp)")
+        try fm.copyItem(at: skill.skillFileURL, to: backupURL)
+        return backupURL
     }
 
     func startWatching() {
@@ -136,5 +181,15 @@ final class SkillStore: ObservableObject {
 
     func stopWatching() {
         fileWatcher?.stop()
+    }
+}
+
+enum SkillWriteError: LocalizedError {
+    case validationFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .validationFailed(let msg): return msg
+        }
     }
 }

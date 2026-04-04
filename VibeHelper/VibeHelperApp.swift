@@ -15,6 +15,8 @@ struct VibeHelperApp: App {
                     .tabItem { Label("Dashboard", systemImage: "chart.bar") }
                 SkillsListView()
                     .tabItem { Label("Skills", systemImage: "sparkles") }
+                ModelsSettingsView()
+                    .tabItem { Label("Models", systemImage: "cpu") }
             }
             .preferredColorScheme(selectedMode.colorScheme)
         }
