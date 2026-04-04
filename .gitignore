@@ -3,3 +3,11 @@
 .swiftpm/
 *.xcodeproj/xcuserdata/
 DerivedData/
+
+# Secrets and credentials
+*.env*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*

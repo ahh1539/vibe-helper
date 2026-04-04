@@ -77,16 +77,25 @@ enum TomlParser {
         return ""
     }
 
+    /// Escape a string for safe inclusion in a TOML quoted value.
+    private static func escapeTomlString(_ str: String) -> String {
+        str.replacingOccurrences(of: "\\", with: "\\\\")
+           .replacingOccurrences(of: "\"", with: "\\\"")
+           .replacingOccurrences(of: "\n", with: "\\n")
+           .replacingOccurrences(of: "\r", with: "\\r")
+           .replacingOccurrences(of: "\t", with: "\\t")
+    }
+
     /// Serialize a single model to a TOML `[[models]]` block.
     static func serializeModel(_ model: VibeModel) -> String {
         var lines = ["[[models]]"]
-        lines.append("name = \"\(model.name)\"")
-        lines.append("provider = \"\(model.provider)\"")
-        lines.append("alias = \"\(model.alias)\"")
+        lines.append("name = \"\(escapeTomlString(model.name))\"")
+        lines.append("provider = \"\(escapeTomlString(model.provider))\"")
+        lines.append("alias = \"\(escapeTomlString(model.alias))\"")
         lines.append("temperature = \(model.temperature)")
         lines.append("input_price = \(model.inputPrice)")
         lines.append("output_price = \(model.outputPrice)")
-        lines.append("thinking = \"\(model.thinking)\"")
+        lines.append("thinking = \"\(escapeTomlString(model.thinking))\"")
         lines.append("auto_compact_threshold = \(model.autoCompactThreshold)")
         return lines.joined(separator: "\n")
     }
@@ -94,19 +103,19 @@ enum TomlParser {
     /// Serialize a single provider to a TOML `[[providers]]` block.
     static func serializeProvider(_ provider: VibeProvider) -> String {
         var lines = ["[[providers]]"]
-        lines.append("name = \"\(provider.name)\"")
-        lines.append("api_base = \"\(provider.apiBase)\"")
-        lines.append("api_key_env_var = \"\(provider.apiKeyEnvVar)\"")
-        lines.append("api_style = \"\(provider.apiStyle)\"")
-        lines.append("backend = \"\(provider.backend)\"")
+        lines.append("name = \"\(escapeTomlString(provider.name))\"")
+        lines.append("api_base = \"\(escapeTomlString(provider.apiBase))\"")
+        lines.append("api_key_env_var = \"\(escapeTomlString(provider.apiKeyEnvVar))\"")
+        lines.append("api_style = \"\(escapeTomlString(provider.apiStyle))\"")
+        lines.append("backend = \"\(escapeTomlString(provider.backend))\"")
         if !provider.reasoningFieldName.isEmpty {
-            lines.append("reasoning_field_name = \"\(provider.reasoningFieldName)\"")
+            lines.append("reasoning_field_name = \"\(escapeTomlString(provider.reasoningFieldName))\"")
         }
         if !provider.projectId.isEmpty {
-            lines.append("project_id = \"\(provider.projectId)\"")
+            lines.append("project_id = \"\(escapeTomlString(provider.projectId))\"")
         }
         if !provider.region.isEmpty {
-            lines.append("region = \"\(provider.region)\"")
+            lines.append("region = \"\(escapeTomlString(provider.region))\"")
         }
         return lines.joined(separator: "\n")
     }
