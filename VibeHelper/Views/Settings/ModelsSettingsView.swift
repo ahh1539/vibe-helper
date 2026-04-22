@@ -55,6 +55,10 @@ struct ModelsSettingsView: View {
 
                     // Backups
                     BackupsSection(store: store)
+                    
+                    // MCP Servers
+                    McpServersSettingsView()
+                        .cardStyle()
                 }
 
                 if let error = store.lastError {

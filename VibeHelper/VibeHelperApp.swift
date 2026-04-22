@@ -15,6 +15,8 @@ struct VibeHelperApp: App {
                     .tabItem { Label("Dashboard", systemImage: "chart.bar") }
                 SkillsListView()
                     .tabItem { Label("Skills", systemImage: "sparkles") }
+                McpServersListView()
+                    .tabItem { Label("MCP Servers", systemImage: "server.rack") }
                 ModelsSettingsView()
                     .tabItem { Label("Models", systemImage: "cpu") }
             }
