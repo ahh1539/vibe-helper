@@ -9,5 +9,9 @@ let package = Package(
             name: "VibeHelper",
             path: "VibeHelper"
         ),
+        .executableTarget(
+            name: "VibeHelperMenu",
+            path: "VibeHelperMenu"
+        ),
     ]
 )
