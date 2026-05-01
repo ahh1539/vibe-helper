@@ -220,9 +220,11 @@ final class SessionStore: ObservableObject {
         nextRefreshAt = Date().addingTimeInterval(interval)
 
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                await self?.load()
-                self?.nextRefreshAt = Date().addingTimeInterval(interval)
+            DispatchQueue.main.async {
+                Task {
+                    await self?.load()
+                    self?.nextRefreshAt = Date().addingTimeInterval(interval)
+                }
             }
         }
     }

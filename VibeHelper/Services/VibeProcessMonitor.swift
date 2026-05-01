@@ -27,8 +27,10 @@ final class VibeProcessMonitor: ObservableObject {
         // Invalidate any existing timer first
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                await self?.refresh()
+            DispatchQueue.main.async {
+                Task {
+                    await self?.refresh()
+                }
             }
         }
     }
