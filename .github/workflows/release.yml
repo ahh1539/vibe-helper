@@ -1,27 +1,15 @@
-name: Build and Release
+name: Build Check
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+  pull_request:
 
 jobs:
   build:
     runs-on: macos-14
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build release binary
+      - name: Build
         run: swift build -c release
-
-      - name: Create app bundle and DMG
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          bash scripts/build-dmg.sh "$VERSION"
-
-      - name: Upload DMG to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: .build/VibeHelper-*.dmg

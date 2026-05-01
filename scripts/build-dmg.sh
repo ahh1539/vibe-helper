@@ -74,6 +74,12 @@ codesign --force --deep --options runtime \
 codesign --verify --deep --strict "${APP_BUNDLE}"
 echo "✅ Code signing verified"
 
+if [ -n "${SKIP_DMG:-}" ]; then
+    echo "⏭️  Skipping DMG creation (SKIP_DMG set)"
+    echo "✅ Signed app bundle at: ${APP_BUNDLE}"
+    exit 0
+fi
+
 echo "💿 Creating DMG..."
 rm -rf "${DMG_DIR}"
 mkdir -p "${DMG_DIR}"
