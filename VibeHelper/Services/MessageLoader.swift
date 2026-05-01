@@ -4,21 +4,21 @@ struct MessageLoader {
     static func load(directoryURL: URL) async -> [SessionMessage] {
         await Task.detached(priority: .userInitiated) {
             let url = directoryURL.appendingPathComponent("messages.jsonl")
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            var messages: [SessionMessage] = []
             do {
-                let data = try Data(contentsOf: url)
-                guard let text = String(data: data, encoding: .utf8) else { return [] }
-                let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
-                return text.components(separatedBy: .newlines)
-                    .filter { !$0.isEmpty }
-                    .compactMap { line -> SessionMessage? in
-                        guard let d = line.data(using: .utf8) else { return nil }
-                        return try? decoder.decode(SessionMessage.self, from: d)
+                for try await line in url.lines {
+                    guard !line.isEmpty else { continue }
+                    guard let data = line.data(using: .utf8) else { continue }
+                    if let message = try? decoder.decode(SessionMessage.self, from: data) {
+                        messages.append(message)
                     }
+                }
             } catch {
-                print("MessageLoader: Failed to load messages: \(error)")
-                return []
+                // Silently skip unreadable messages
             }
+            return messages
         }.value
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SkillsListView: View {
-    @StateObject private var store = SkillStore()
+    @EnvironmentObject var store: SkillStore
     @State private var showingNewSkill = false
     @State private var selectedSkill: Skill? = nil
 
@@ -59,10 +59,6 @@ struct SkillsListView: View {
         }
         .frame(minWidth: 800, minHeight: 600)
         .background(Color(nsColor: .windowBackgroundColor))
-        .task {
-            await store.load()
-            store.startWatching()
-        }
         .sheet(item: $selectedSkill) { skill in
             SkillDetailView(skill: skill, store: store)
         }

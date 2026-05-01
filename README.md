@@ -2,9 +2,15 @@
 
 A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://github.com/mistralai/mistral-vibe) usage — costs, tokens, sessions, and tool call analytics — all in a clean, minimal interface.
 
-![macOS](https://img.shields.io/badge/macOS-14%2B-blue) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![SwiftUI](https://img.shields.io/badge/SwiftUI-Charts-green)
+![macOS](https://img.shields.io/badge/macOS-14%2B-blue) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![SwiftUI](https://img.shields.io/badge/SwiftUI-Charts-green) ![Version](https://img.shields.io/badge/version-v2.0.0-blue)
 
-![Vibe Helper Dashboard](assets/screenshot.png)
+![Vibe Helper App](assets/screenshot2.png)
+
+### Menu Bar Stats
+
+Quickly check your daily, weekly, and monthly stats right from the menu bar.
+
+![Menu Bar Stats](assets/menubar.png)
 
 ## Features
 
@@ -14,7 +20,7 @@ A native macOS dashboard app for visualizing your [Mistral Vibe CLI](https://git
 - **Activity Heatmap** — GitHub-style calendar heatmap showing session frequency and duration
 - **Tool Usage** — Donut chart of tool call outcomes (succeeded, rejected, failed)
 - **Per-Project Filtering** — Filter all stats by project/working directory
-- **Time Range Controls** — Quick presets (Today, 7 Days, 30 Days, All Time) + custom date picker
+- **Time Range Controls** — Quick presets (Today, 7 Days, 30 Days) + custom date picker
 - **Session Detail View** — Click any session to drill into full stats, token breakdown, tool calls, and timing
 - **Session Replay** — View the full conversation for any session, including assistant messages and tool calls with expandable arguments
 - **Live Updates** — File system watcher auto-refreshes when new sessions complete
@@ -62,10 +68,10 @@ open .build/release/VibeHelper
 ### Build the DMG yourself
 
 ```bash
-bash scripts/build-dmg.sh 1.0.0
+bash scripts/build-dmg.sh 2.0.0
 ```
 
-This creates `.build/VibeHelper-1.0.0-macOS.dmg` — a drag-to-Applications installer.
+This creates `.build/VibeHelper-2.0.0-macOS.dmg` — a drag-to-Applications installer.
 
 ## How It Works
 
@@ -107,6 +113,7 @@ static let sessionDirectory = URL(fileURLWithPath: "/your/custom/path")
 
 ```
 VibeHelper/
+├── AppDelegate.swift                # App lifecycle management
 ├── VibeHelperApp.swift              # App entry point
 ├── Models/
 │   ├── Session.swift                # Codable model for meta.json
@@ -120,7 +127,9 @@ VibeHelper/
 │   ├── MessageLoader.swift          # Parses messages.jsonl for replay
 │   ├── SessionLoader.swift          # Parses all session meta.json files
 │   ├── SessionStore.swift           # Central data store (ObservableObject)
-│   └── SkillStore.swift             # Skill CRUD and file watching
+│   ├── SkillStore.swift             # Skill CRUD and file watching
+│   ├── StoresContainer.swift        # Singleton container for shared stores
+│   └── VibeProcessMonitor.swift     # Monitors Vibe CLI process status
 ├── Views/
 │   ├── DashboardView.swift          # Main single-window dashboard
 │   ├── Cards/
@@ -128,9 +137,13 @@ VibeHelper/
 │   │   ├── TokenCard.swift          # Input/output token bar chart
 │   │   ├── ActivityCard.swift       # Calendar heatmap
 │   │   └── ToolUsageCard.swift      # Tool call donut chart
+│   ├── Components/
+│   │   └── SessionBreadcrumbBar.swift # Breadcrumb navigation
 │   ├── Controls/
 │   │   ├── TimeRangePickerView.swift
 │   │   └── ProjectFilterView.swift
+│   ├── MenuBar/
+│   │   └── MenuBarPopoverView.swift # Menu bar popover UI with stats
 │   ├── Settings/
 │   │   ├── ModelsSettingsView.swift  # Model/provider list + backup UI
 │   │   └── ModelEditorView.swift     # Edit forms for models & providers
@@ -139,8 +152,8 @@ VibeHelper/
 │   │   ├── SkillDetailView.swift     # Skill detail/edit/delete
 │   │   └── SkillEditorView.swift     # Create/edit skill form
 │   ├── SessionListView.swift        # Scrollable session list
-│   ├── SessionDetailView.swift      # Full session detail sheet
-│   └── SessionReplayView.swift      # Conversation replay
+│   ├── SessionDetailView.swift      # Full session detail view
+│   └── SessionReplayView.swift      # Conversation replay with search
 └── Utilities/
     ├── ColorTheme.swift
     └── DateFormatting.swift

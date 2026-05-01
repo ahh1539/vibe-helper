@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SessionListView: View {
     let sessions: [Session]
-    @Binding var selectedSession: Session?
+    var onSelect: (Session) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -20,7 +20,7 @@ struct SessionListView: View {
                 ForEach(sessions.prefix(20)) { session in
                     SessionRow(session: session)
                         .onTapGesture {
-                            selectedSession = session
+                            onSelect(session)
                         }
                 }
                 if sessions.count > 20 {

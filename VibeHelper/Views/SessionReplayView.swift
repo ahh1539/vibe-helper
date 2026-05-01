@@ -14,34 +14,50 @@ final class ReplayViewModel: ObservableObject {
 
 struct SessionReplayView: View {
     let session: Session
+    var onPopToRoot: () -> Void
+    var onPop: () -> Void
+
     @StateObject private var viewModel = ReplayViewModel()
-    @Environment(\.dismiss) private var dismiss
+    @State private var searchText: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(session.title ?? "Session Replay")
-                        .font(.headline)
-                    Text("\(session.activeModelName) · \(session.formattedDuration)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button { dismiss() } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
+            // Breadcrumb
+            SessionBreadcrumbBar(items: [
+                BreadcrumbItem(label: "Dashboard", action: onPopToRoot),
+                BreadcrumbItem(label: session.title ?? "Untitled Session", action: onPop),
+                BreadcrumbItem(label: "Replay", action: {})
+            ])
             .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(.ultraThinMaterial)
+            .padding(.vertical, 8)
+
+            // Search bar
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                TextField("Search messages...", text: $searchText)
+                    .textFieldStyle(.plain)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.primary.opacity(0.04))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
 
             Divider()
 
+            // Messages
             if viewModel.isLoading {
                 ProgressView("Loading conversation…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -50,10 +66,20 @@ struct SessionReplayView: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if filteredMessages.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    Text("No messages match \"\(searchText)\"")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
-                        ForEach(viewModel.messages) { message in
+                        ForEach(filteredMessages) { message in
                             MessageBubbleView(message: message)
                         }
                     }
@@ -66,6 +92,27 @@ struct SessionReplayView: View {
             if let url = session.directoryURL {
                 await viewModel.load(directoryURL: url)
             }
+        }
+    }
+
+    private var filteredMessages: [SessionMessage] {
+        guard !searchText.isEmpty else { return viewModel.messages }
+        let query = searchText.lowercased()
+        return viewModel.messages.filter { message in
+            if let content = message.content, content.localizedCaseInsensitiveContains(query) {
+                return true
+            }
+            if let name = message.name, name.localizedCaseInsensitiveContains(query) {
+                return true
+            }
+            if let toolCalls = message.toolCalls {
+                for tc in toolCalls {
+                    if tc.function.name.localizedCaseInsensitiveContains(query) {
+                        return true
+                    }
+                }
+            }
+            return false
         }
     }
 }

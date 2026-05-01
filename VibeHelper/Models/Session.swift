@@ -18,7 +18,7 @@ struct SessionAgentProfile: Codable {
     let name: String
 }
 
-struct Session: Codable, Identifiable, Equatable {
+struct Session: Codable, Identifiable, Equatable, Hashable {
     let sessionId: String
     let startTime: Date
     let endTime: Date
@@ -43,6 +43,10 @@ struct Session: Codable, Identifiable, Equatable {
 
     static func == (lhs: Session, rhs: Session) -> Bool {
         return lhs.sessionId == rhs.sessionId
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(sessionId)
     }
 
     var activeModelName: String {

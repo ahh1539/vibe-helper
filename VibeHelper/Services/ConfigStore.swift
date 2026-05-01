@@ -15,6 +15,12 @@ final class ConfigStore: ObservableObject {
     static let configFile = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".vibe/config.toml")
 
+    private static let backupDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd_HHmmss"
+        return f
+    }()
+
     // MARK: - Load
 
     func load() async {
@@ -106,9 +112,7 @@ final class ConfigStore: ObservableObject {
 
     private func createBackup() throws -> URL {
         let fm = FileManager.default
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        let timestamp = formatter.string(from: Date())
+        let timestamp = Self.backupDateFormatter.string(from: Date())
         let backupURL = Self.configFile.deletingLastPathComponent()
             .appendingPathComponent("config.toml.bak.\(timestamp)")
         try fm.copyItem(at: Self.configFile, to: backupURL)
@@ -163,6 +167,12 @@ final class ConfigStore: ObservableObject {
 
     func stopWatching() {
         fileWatcher?.stop()
+    }
+
+    /// Clean up resources. Can be called manually if needed.
+    @MainActor
+    func cleanup() {
+        stopWatching()
     }
 }
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ModelsSettingsView: View {
-    @StateObject private var store = ConfigStore()
+    @EnvironmentObject var store: ConfigStore
     @State private var selectedModel: VibeModel? = nil
     @State private var selectedProvider: VibeProvider? = nil
 
@@ -71,10 +71,6 @@ struct ModelsSettingsView: View {
         }
         .frame(minWidth: 800, minHeight: 600)
         .background(Color(nsColor: .windowBackgroundColor))
-        .task {
-            await store.load()
-            store.startWatching()
-        }
         .sheet(item: $selectedModel) { model in
             ModelEditorView(model: model, store: store)
         }

@@ -9,5 +9,10 @@ let package = Package(
             name: "VibeHelper",
             path: "VibeHelper"
         ),
+        .testTarget(
+            name: "VibeHelperTests",
+            dependencies: ["VibeHelper"],
+            path: "Tests"
+        ),
     ]
 )

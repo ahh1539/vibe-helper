@@ -19,6 +19,7 @@ struct SessionLoader {
     static func loadAllSessions() async -> [Session] {
         let fileManager = FileManager.default
         let baseURL = sessionDirectory
+        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? .distantPast
 
         guard let contents = try? fileManager.contentsOfDirectory(
             at: baseURL,
@@ -49,6 +50,12 @@ struct SessionLoader {
         var sessions: [Session] = []
 
         for url in contents {
+            // Skip directories older than 30 days by checking date prefix (format: YYYY-MM-DD_...)
+            let datePrefix = String(url.lastPathComponent.prefix(10))
+            if let directoryDate = SessionLoader.fallbackDateFormatter.date(from: "\(datePrefix)T00:00:00Z") {
+                guard directoryDate >= thirtyDaysAgo else { continue }
+            }
+
             let metaURL = url.appendingPathComponent("meta.json")
             guard fileManager.fileExists(atPath: metaURL.path) else { continue }
 
@@ -58,7 +65,7 @@ struct SessionLoader {
                 session.directoryURL = url
                 sessions.append(session)
             } catch {
-                print("Failed to parse \(metaURL.path): \(error)")
+                // Silently skip unreadable sessions
             }
         }
 

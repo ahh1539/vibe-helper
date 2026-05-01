@@ -2,12 +2,18 @@ import SwiftUI
 
 struct SessionDetailView: View {
     let session: Session
-    @Environment(\.dismiss) private var dismiss
-    @State private var showingReplay = false
+    var onReplay: () -> Void
+    var onPopToRoot: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Breadcrumb
+                SessionBreadcrumbBar(items: [
+                    BreadcrumbItem(label: "Dashboard", action: onPopToRoot),
+                    BreadcrumbItem(label: session.title ?? "Untitled Session", action: {})
+                ])
+
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
@@ -25,7 +31,7 @@ struct SessionDetailView: View {
                     }
                     Spacer()
                     Button {
-                        showingReplay = true
+                        onReplay()
                     } label: {
                         Label("Replay", systemImage: "play.circle")
                             .font(.callout)
@@ -33,13 +39,6 @@ struct SessionDetailView: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.vibePrimary)
                     .disabled(session.directoryURL == nil)
-
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
                 }
 
                 Divider()
@@ -146,9 +145,6 @@ struct SessionDetailView: View {
             .padding(24)
         }
         .frame(minWidth: 550, minHeight: 500)
-        .sheet(isPresented: $showingReplay) {
-            SessionReplayView(session: session)
-        }
     }
 }
 

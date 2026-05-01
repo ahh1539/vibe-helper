@@ -10,7 +10,6 @@ struct TimeRangePickerView: View {
         ("Today", .today),
         ("7 Days", .week),
         ("30 Days", .month),
-        ("All Time", .allTime),
     ]
 
     var body: some View {
@@ -57,7 +56,9 @@ struct TimeRangePickerView: View {
 
     private func isSelected(_ range: TimeRange) -> Bool {
         switch (timeRange, range) {
-        case (.today, .today), (.week, .week), (.month, .month), (.allTime, .allTime):
+        case (.today, .today), (.week, .week), (.month, .month):
+            return true
+        case (.custom, .custom):
             return true
         default:
             return false

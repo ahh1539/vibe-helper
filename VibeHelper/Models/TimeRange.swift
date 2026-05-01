@@ -4,7 +4,6 @@ enum TimeRange: Equatable {
     case today
     case week
     case month
-    case allTime
     case custom(Date, Date)
 
     var label: String {
@@ -12,7 +11,6 @@ enum TimeRange: Equatable {
         case .today: return "Today"
         case .week: return "7 Days"
         case .month: return "30 Days"
-        case .allTime: return "All Time"
         case .custom: return "Custom"
         }
     }
@@ -26,8 +24,6 @@ enum TimeRange: Equatable {
             return calendar.date(byAdding: .day, value: -7, to: Date())
         case .month:
             return calendar.date(byAdding: .day, value: -30, to: Date())
-        case .allTime:
-            return nil
         case .custom(let start, _):
             return start
         }

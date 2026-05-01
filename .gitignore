@@ -3,6 +3,8 @@
 .swiftpm/
 *.xcodeproj/xcuserdata/
 DerivedData/
+*.app/
+VibeHelperMenu.app/
 
 # Secrets and credentials
 *.env*

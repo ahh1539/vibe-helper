@@ -17,6 +17,12 @@ final class SkillStore: ObservableObject {
     static let configFile = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".vibe/config.toml")
 
+    private static let backupDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd_HHmmss"
+        return f
+    }()
+
     static let defaultTools = [
         "ask_user_question",
         "bash",
@@ -145,9 +151,7 @@ final class SkillStore: ObservableObject {
     func deleteSkill(_ skill: Skill) throws {
         // Backup the entire skill directory before deleting
         let fm = FileManager.default
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        let timestamp = formatter.string(from: Date())
+        let timestamp = Self.backupDateFormatter.string(from: Date())
         let backupDir = Self.skillsDirectory
             .appendingPathComponent(".backups", isDirectory: true)
         try fm.createDirectory(at: backupDir, withIntermediateDirectories: true)
@@ -162,9 +166,7 @@ final class SkillStore: ObservableObject {
 
     private func backupSkillFile(_ skill: Skill) throws -> URL {
         let fm = FileManager.default
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        let timestamp = formatter.string(from: Date())
+        let timestamp = Self.backupDateFormatter.string(from: Date())
         let backupURL = skill.directoryURL.appendingPathComponent("SKILL.md.bak.\(timestamp)")
         try fm.copyItem(at: skill.skillFileURL, to: backupURL)
         return backupURL
@@ -181,6 +183,12 @@ final class SkillStore: ObservableObject {
 
     func stopWatching() {
         fileWatcher?.stop()
+    }
+
+    /// Clean up resources. Can be called manually if needed.
+    @MainActor
+    func cleanup() {
+        stopWatching()
     }
 }
 

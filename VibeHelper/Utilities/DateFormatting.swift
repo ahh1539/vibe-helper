@@ -1,24 +1,28 @@
 import Foundation
 
 extension Date {
-    var shortFormatted: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: self)
-    }
+    private static let shortFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        f.timeStyle = .short
+        return f
+    }()
 
-    var dayFormatted: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: self)
-    }
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
 
-    var timeFormatted: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: self)
-    }
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
+
+    var shortFormatted: String { Date.shortFormatter.string(from: self) }
+    var dayFormatted: String { Date.dayFormatter.string(from: self) }
+    var timeFormatted: String { Date.timeFormatter.string(from: self) }
 }
 
 extension Int {
