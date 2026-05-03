@@ -270,18 +270,18 @@ enum TomlMcpParser {
     static func serializeMcpServer(_ server: McpServer) -> String {
         var lines: [String] = ["[[mcp_servers]]"]
         
-        lines.append("name = \"\\(escapeTomlString(server.name))\"")
-        lines.append("transport = \"\\(escapeTomlString(server.transport))\"")
+        lines.append("name = \"\(escapeTomlString(server.name))\"")
+        lines.append("transport = \"\(escapeTomlString(server.transport))\"")
         
         if server.transport == "stdio" {
-            lines.append("command = \"\\(escapeTomlString(server.command))\"")
+            lines.append("command = \"\(escapeTomlString(server.command))\"")
             if !server.args.isEmpty {
                 let escapedArgs = server.args.map { TomlMcpParser.escapeTomlString($0) }
                 let argsString = escapedArgs.map { "\"" + $0 + "\"" }.joined(separator: ", ")
                 lines.append("args = [" + argsString + "]")
             }
         } else {
-            lines.append("url = \"\\(escapeTomlString(server.url))\"")
+            lines.append("url = \"\(escapeTomlString(server.url))\"")
         }
         
         if !server.env.isEmpty {
@@ -304,9 +304,9 @@ enum TomlMcpParser {
             lines.append("headers = { " + headersString + " }")
         }
         
-        lines.append("api_key_env = \"\\(escapeTomlString(server.apiKeyEnv))\"")
-        lines.append("api_key_header = \"\\(escapeTomlString(server.apiKeyHeader))\"")
-        lines.append("api_key_format = \"\\(escapeTomlString(server.apiKeyFormat))\"")
+        lines.append("api_key_env = \"\(escapeTomlString(server.apiKeyEnv))\"")
+        lines.append("api_key_header = \"\(escapeTomlString(server.apiKeyHeader))\"")
+        lines.append("api_key_format = \"\(escapeTomlString(server.apiKeyFormat))\"")
         lines.append("timeout = \(server.timeout)")
         lines.append("startup_timeout_sec = \(server.startupTimeoutSec)")
         lines.append("tool_timeout_sec = \(server.toolTimeoutSec)")
