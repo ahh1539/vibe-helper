@@ -9,6 +9,14 @@ final class McpServerStore: ObservableObject {
     
     private let configStore = ConfigStore()
     
+    private func findServer(byId id: UUID) -> McpServer? {
+        servers.first { $0.id == id }
+    }
+    
+    private func findServer(byName name: String) -> McpServer? {
+        servers.first { $0.name.lowercased() == name.lowercased() }
+    }
+    
     // MARK: - Lifecycle
     
     func load() async {
@@ -41,7 +49,7 @@ isLoading = false
     
     func updateServer(_ server: McpServer) async {
         let updated = servers.map { current in
-            current.id == server.id ? server : current
+            current.name.lowercased() == server.name.lowercased() ? server : current
         }
         
         do {
@@ -53,7 +61,7 @@ isLoading = false
     }
     
     func deleteServer(_ server: McpServer) async {
-        let updated = servers.filter { $0.id != server.id }
+        let updated = servers.filter { $0.name.lowercased() != server.name.lowercased() }
         
         // Confirmation could be here, but we delegate to UI
         do {
@@ -73,7 +81,7 @@ isLoading = false
         // For now, let's update persistently to be safe
         do {
             try await saveServers(servers.map { 
-                $0.id == server.id ? updated : $0 
+                $0.name.lowercased() == server.name.lowercased() ? updated : $0 
             })
             await load()
         } catch {
@@ -139,13 +147,13 @@ isLoading = false
         return configStore.rawContent
     }
     
-    func serverExists(named name: String, excluding id: UUID? = nil) -> Bool {
-        if let excludeId = id {
+    func serverExists(named name: String, excluding existingServer: McpServer? = nil) -> Bool {
+        if let existing = existingServer {
             return servers.contains { 
-                $0.name.lowercased() == name.lowercased() && $0.id != excludeId  
+                $0.name.lowercased() == name.lowercased() && $0.name.lowercased() != existing.name.lowercased()
             }
         }
-        return servers.contains { $0.name.lowercased() == name.lowercased() && ($0.id != id || id != nil) }
+        return servers.contains { $0.name.lowercased() == name.lowercased() }
     }
     
     // MARK: - Configuration Backup Management
