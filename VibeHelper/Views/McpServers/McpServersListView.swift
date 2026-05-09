@@ -97,6 +97,10 @@ struct McpServersListView: View {
                             await store.toggleServer(server, enabled: enabled)
                         }
                     },
+                    onDelete: {
+                        serverToDelete = server
+                        showingDeleteAlert = true
+                    },
                     isToggleDisabled: store.isLoading
                 )
             }
@@ -123,6 +127,10 @@ struct McpServersListView: View {
                         Task {
                             await store.toggleServer(server, enabled: enabled)
                         }
+                    },
+                    onDelete: {
+                        serverToDelete = server
+                        showingDeleteAlert = true
                     },
                     isToggleDisabled: store.isLoading
                 )

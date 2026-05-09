@@ -169,11 +169,43 @@ final class ConfigStore: ObservableObject {
             throw ConfigError.validationFailed("Server count mismatch after write")
         }
         
+        // Validate that models and providers weren't corrupted (same validation as safeWrite)
+        let parsedModels = TomlParser.parseModels(from: content)
+        let parsedProviders = TomlParser.parseProviders(from: content)
+        
+        // Only validate if we had models/providers before (to avoid false positives on first write)
+        if parsedModels.isEmpty && !models.isEmpty {
+            throw ConfigError.validationFailed("Models section was corrupted during MCP server write — check backup")
+        }
+        
+        if parsedProviders.isEmpty && !providers.isEmpty {
+            throw ConfigError.validationFailed("Providers section was corrupted during MCP server write — check backup")
+        }
+        
         // Atomic write
         try content.write(to: Self.configFile, atomically: true, encoding: .utf8)
         
+        // Validate: re-read and re-parse to confirm file integrity
+        guard let written = try? String(contentsOf: Self.configFile, encoding: .utf8) else {
+            try? FileManager.default.removeItem(at: Self.configFile)
+            try? FileManager.default.copyItem(at: backup, to: Self.configFile)
+            throw ConfigError.validationFailed("Could not re-read config.toml after MCP server write")
+        }
+        
+        let finalParsedServers = TomlMcpParser.parseMcpServers(from: written)
+        let finalParsedModels = TomlParser.parseModels(from: written)
+        let finalParsedProviders = TomlParser.parseProviders(from: written)
+        
+        if finalParsedServers.count != servers.count {
+            try? FileManager.default.removeItem(at: Self.configFile)
+            try? FileManager.default.copyItem(at: backup, to: Self.configFile)
+            throw ConfigError.validationFailed("Server count mismatch after write — restored from backup")
+        }
+        
         // Update local state
-        self.rawContent = content
+        self.rawContent = written
+        self.models = finalParsedModels
+        self.providers = finalParsedProviders
         self.backups = Self.loadBackups()
     }
 
@@ -382,21 +414,104 @@ enum TomlMcpParser {
     
     private static func parseDictionary(_ dictString: String) -> [String: String] {
         var result: [String: String] = [:]
-        // Simple parser for { "key": "value", "key2": "value2" } format
-        let clean = dictString
-            .trimmingCharacters(in: CharacterSet(charactersIn: "{}"))
-            .replacingOccurrences(of: "\"", with: "")
+        // Parse dictionary format: { "key": "value", "key2": "value2" }
+        // Properly handles escaped quotes within values
+        let clean = dictString.trimmingCharacters(in: CharacterSet(charactersIn: "{}"))
         
-        let pairs = clean.components(separatedBy: ",")
+        var pairs = [String]()
+        var currentPair = ""
+        var inQuotes = false
+        var escapeNext = false
+        
+        for char in clean {
+            if escapeNext {
+                currentPair.append(char)
+                escapeNext = false
+                continue
+            }
+            
+            if char == "\\" {
+                escapeNext = true
+                currentPair.append(char)
+                continue
+            }
+            
+            if char == "\"" {
+                inQuotes.toggle()
+                currentPair.append(char)
+                continue
+            }
+            
+            if char == "," && !inQuotes {
+                pairs.append(currentPair)
+                currentPair = ""
+                continue
+            }
+            
+            currentPair.append(char)
+        }
+        
+        // Add the last pair
+        if !currentPair.isEmpty {
+            pairs.append(currentPair)
+        }
+        
+        // Parse each key-value pair
         for pair in pairs {
-            let parts = pair.components(separatedBy: ":")
-            if parts.count == 2 {
-                let key = parts[0].trimmingCharacters(in: .whitespaces)
-                let value = parts[1].trimmingCharacters(in: .whitespaces)
+            let trimmedPair = pair.trimmingCharacters(in: .whitespaces)
+            guard !trimmedPair.isEmpty else { continue }
+            
+            // Split on : that's not inside quotes
+            var colonIndex: String.Index?
+            inQuotes = false
+            escapeNext = false
+            var foundColon: String.Index? = nil
+            
+            for (i, char) in trimmedPair.enumerated() {
+                if escapeNext {
+                    escapeNext = false
+                    continue
+                }
+                
+                if char == "\\" {
+                    escapeNext = true
+                    continue
+                }
+                
+                if char == "\"" {
+                    inQuotes.toggle()
+                    continue
+                }
+                
+                if char == ":" && !inQuotes && foundColon == nil {
+                    foundColon = trimmedPair.index(trimmedPair.startIndex, offsetBy: i)
+                    break
+                }
+            }
+            
+            guard let foundColon = foundColon else { continue }
+            
+            let keyPart = String(trimmedPair[..<foundColon]).trimmingCharacters(in: .whitespaces)
+            let valuePart = String(trimmedPair[trimmedPair.index(after: foundColon)...]).trimmingCharacters(in: .whitespaces)
+            
+            // Strip surrounding quotes from key and value
+            let key = stripSurroundingQuotes(keyPart)
+            let value = stripSurroundingQuotes(valuePart)
+            
+            if !key.isEmpty {
                 result[key] = value
             }
         }
+        
         return result
+    }
+    
+    private static func stripSurroundingQuotes(_ str: String) -> String {
+        let trimmed = str.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"") && trimmed.count >= 2 {
+            return String(trimmed.dropFirst().dropLast())
+        }
+        return trimmed
     }
     
     private static func extractValueFromToml(_ raw: String) -> String {

@@ -17,6 +17,7 @@ struct McpServerEditorView: View {
     @State private var startupTimeoutText = "15"
     @State private var toolTimeoutText = "120"
     @State private var errorMessage: String? = nil
+    @State private var headerEntries: [(key: String, value: String)] = []
 
     private var isEditing: Bool {
         if case .edit = mode { return true }
@@ -33,11 +34,15 @@ struct McpServerEditorView: View {
             _timeoutText = State(initialValue: "30")
             _startupTimeoutText = State(initialValue: "15")
             _toolTimeoutText = State(initialValue: "120")
+            _headerEntries = State(initialValue: [])
         case .edit(let existingServer):
             _server = State(initialValue: existingServer)
             _timeoutText = State(initialValue: String(existingServer.timeout))
             _startupTimeoutText = State(initialValue: String(existingServer.startupTimeoutSec))
             _toolTimeoutText = State(initialValue: String(existingServer.toolTimeoutSec))
+            // Initialize headerEntries from server.headers (sorted for stability)
+            let sortedHeaders = existingServer.headers.sorted { $0.key < $1.key }
+            _headerEntries = State(initialValue: sortedHeaders.map { ($0.key, $0.value) })
         }
     }
 
@@ -153,63 +158,53 @@ struct McpServerEditorView: View {
                         }
                     }
 
-                    // Headers
-                    if !server.headers.isEmpty || (server.apiKeyEnv.isEmpty && server.apiKeyHeader.isEmpty) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("HTTP Headers (optional)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                    // Headers - using stable array to avoid Dictionary ordering issues
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("HTTP Headers (optional)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
-                            ForEach(0..<max(1, server.headers.count + 1), id: \.self) { index in
-                                HStack {
-                                    TextField("Header Name", text: Binding(
-                                        get: { index < server.headers.count ? Array(server.headers.keys)[index] : "" },
-                                        set: { newKey in
-                                            if index < server.headers.count {
-                                                let oldKey = Array(server.headers.keys)[index]
-                                                let value = server.headers[oldKey] ?? ""
-                                                if !newKey.isEmpty {
-                                                    server.headers[newKey] = value
-                                                    server.headers.removeValue(forKey: oldKey)
-                                                }
-                                            } else if !newKey.isEmpty {
-                                                server.headers[newKey] = ""
-                                            }
+                        ForEach(0..<max(1, headerEntries.count + 1), id: \.self) { index in
+                            HStack {
+                                TextField("Header Name", text: Binding(
+                                    get: { index < headerEntries.count ? headerEntries[index].key : "" },
+                                    set: { newKey in
+                                        if index < headerEntries.count {
+                                            var entries = headerEntries
+                                            entries[index].key = newKey
+                                            headerEntries = entries
+                                        } else if !newKey.isEmpty {
+                                            headerEntries.append((key: newKey, value: ""))
                                         }
-                                    ))
-                                    .textFieldStyle(.roundedBorder)
-                                    .frame(width: 120)
-
-                                    Text(":")
-
-                                    TextField("Value", text: Binding(
-                                        get: { index < server.headers.count ? Array(server.headers.values)[index] : "" },
-                                        set: { newValue in
-                                            if index < server.headers.count {
-                                                let key = Array(server.headers.keys)[index]
-                                                if newValue.isEmpty {
-                                                    server.headers.removeValue(forKey: key)
-                                                } else {
-                                                    server.headers[key] = newValue
-                                                }
-                                            } else if !newValue.isEmpty {
-                                                let key = "Header \(index + 1)"
-                                                server.headers[key] = newValue
-                                            }
-                                        }
-                                    ))
-                                    .textFieldStyle(.roundedBorder)
-
-                                    if index < server.headers.count {
-                                        Button(role: .destructive) {
-                                            let keyToRemove = Array(server.headers.keys)[index]
-                                            server.headers.removeValue(forKey: keyToRemove)
-                                        } label: {
-                                            Image(systemName: "minus.circle.fill")
-                                                .foregroundColor(.red)
-                                        }
-                                        .buttonStyle(.plain)
                                     }
+                                ))
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 120)
+
+                                Text(":")
+
+                                TextField("Value", text: Binding(
+                                    get: { index < headerEntries.count ? headerEntries[index].value : "" },
+                                    set: { newValue in
+                                        if index < headerEntries.count {
+                                            var entries = headerEntries
+                                            entries[index].value = newValue
+                                            headerEntries = entries
+                                        } else if !newValue.isEmpty {
+                                            headerEntries.append((key: "Header \(index + 1)", value: newValue))
+                                        }
+                                    }
+                                ))
+                                .textFieldStyle(.roundedBorder)
+
+                                if index < headerEntries.count {
+                                    Button(role: .destructive) {
+                                        headerEntries.remove(at: index)
+                                    } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                            .foregroundColor(.red)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -345,11 +340,12 @@ struct McpServerEditorView: View {
             return
         }
 
-        // Apply timeouts
+        // Apply timeouts - consistent validation for all timeout fields
         if let timeoutValue = Int(timeoutText), timeoutValue > 0 {
             server.timeout = timeoutValue
         } else {
-            server.timeout = 30
+            errorMessage = "Legacy timeout must be positive"
+            return
         }
 
         if let startupTimeoutValue = Int(startupTimeoutText), startupTimeoutValue > 0 {
@@ -370,6 +366,12 @@ struct McpServerEditorView: View {
             errorMessage = "API key format is required when using API key authentication"
             return
         }
+
+        // Sync headerEntries back to server.headers
+        server.headers = Dictionary(uniqueKeysWithValues: headerEntries.map { ($0.key, $0.value) })
+        
+        // Filter out empty headers
+        server.headers = server.headers.filter { !$0.key.isEmpty }
 
         // Save
         Task {

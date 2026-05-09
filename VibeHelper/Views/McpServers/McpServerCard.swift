@@ -5,6 +5,7 @@ struct McpServerCard: View {
     let server: McpServer
     let onTap: () -> Void
     let onToggle: (Bool) -> Void
+    let onDelete: () -> Void
     let isToggleDisabled: Bool
     
     @State private var isPresented = false
@@ -13,11 +14,13 @@ struct McpServerCard: View {
         server: McpServer,
         onTap: @escaping () -> Void = {},
         onToggle: @escaping (Bool) -> Void = { _ in },
+        onDelete: @escaping () -> Void = {},
         isToggleDisabled: Bool = false
     ) {
         self.server = server
         self.onTap = onTap
         self.onToggle = onToggle
+        self.onDelete = onDelete
         self.isToggleDisabled = isToggleDisabled
     }
     
@@ -69,6 +72,13 @@ struct McpServerCard: View {
                     }
                 ))
                 .disabled(isToggleDisabled)
+                
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .help("Delete")
             }
             .padding(.vertical, 8)
             .contentShape(Rectangle())
