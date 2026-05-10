@@ -43,32 +43,54 @@ final class SessionStore: ObservableObject {
     // MARK: - Cached filtered arrays
 
     private var _cachedSessionsToday: [Session]? = nil
+    private var _cachedSessionsTodayDate: Date? = nil
     private var _cachedSessionsThisWeek: [Session]? = nil
+    private var _cachedSessionsThisWeekStart: Date? = nil
     private var _cachedSessionsThisMonth: [Session]? = nil
+    private var _cachedSessionsThisMonthStart: Date? = nil
     private var _cachedFilteredSessions: [Session]? = nil
 
     private func getSessionsToday() -> [Session] {
-        if let cached = _cachedSessionsToday { return cached }
+        let today = Date()
+        // Invalidate cache if date changed (e.g., after midnight)
+        if let cachedDate = _cachedSessionsTodayDate,
+           Calendar.current.isDate(cachedDate, inSameDayAs: today),
+           let cached = _cachedSessionsToday {
+            return cached
+        }
         let result = sessions.filter { Calendar.current.isDateInToday($0.startTime) }
         _cachedSessionsToday = result
+        _cachedSessionsTodayDate = today
         return result
     }
 
     private func getSessionsThisWeek() -> [Session] {
-        if let cached = _cachedSessionsThisWeek { return cached }
         let calendar = Calendar.current
         guard let start = calendar.date(byAdding: .day, value: -7, to: Date()) else { return [] }
+        // Invalidate cache if week boundary changed
+        if let cachedStart = _cachedSessionsThisWeekStart,
+           cachedStart == start,
+           let cached = _cachedSessionsThisWeek {
+            return cached
+        }
         let result = sessions.filter { $0.startTime >= start }
         _cachedSessionsThisWeek = result
+        _cachedSessionsThisWeekStart = start
         return result
     }
 
     private func getSessionsThisMonth() -> [Session] {
-        if let cached = _cachedSessionsThisMonth { return cached }
         let calendar = Calendar.current
         guard let start = calendar.date(byAdding: .day, value: -30, to: Date()) else { return [] }
+        // Invalidate cache if month boundary changed
+        if let cachedStart = _cachedSessionsThisMonthStart,
+           cachedStart == start,
+           let cached = _cachedSessionsThisMonth {
+            return cached
+        }
         let result = sessions.filter { $0.startTime >= start }
         _cachedSessionsThisMonth = result
+        _cachedSessionsThisMonthStart = start
         return result
     }
 
