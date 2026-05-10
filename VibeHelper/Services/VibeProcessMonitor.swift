@@ -51,25 +51,46 @@ final class VibeProcessMonitor: ObservableObject {
             task.standardOutput = pipe
             task.standardError = FileHandle.nullDevice
 
+            var isCompleted = false
+
+            // Set termination handler BEFORE running to avoid race condition
+            task.terminationHandler = { _ in
+                DispatchQueue.main.async {
+                    guard !isCompleted else { return }
+                    isCompleted = true
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    guard let output = String(data: data, encoding: .utf8), !output.isEmpty else {
+                        continuation.resume(returning: false)
+                        return
+                    }
+
+                    let ownPid = Int32(ProcessInfo.processInfo.processIdentifier)
+                    let found = output.split(separator: "\n").contains { line in
+                        Int32(line.trimmingCharacters(in: .whitespaces)) != ownPid
+                    }
+                    continuation.resume(returning: found)
+                }
+            }
+
             do {
                 try task.run()
             } catch {
-                continuation.resume(returning: false)
+                DispatchQueue.main.async {
+                    guard !isCompleted else { return }
+                    isCompleted = true
+                    continuation.resume(returning: false)
+                }
                 return
             }
 
-            task.terminationHandler = { _ in
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                guard let output = String(data: data, encoding: .utf8), !output.isEmpty else {
+            // Add timeout to prevent permanent hang if pgrep never terminates
+            Task {
+                try await Task.sleep(nanoseconds: 5_000_000_000) // 5 second timeout
+                DispatchQueue.main.async {
+                    guard !isCompleted else { return }
+                    isCompleted = true
                     continuation.resume(returning: false)
-                    return
                 }
-
-                let ownPid = Int32(ProcessInfo.processInfo.processIdentifier)
-                let found = output.split(separator: "\n").contains { line in
-                    Int32(line.trimmingCharacters(in: .whitespaces)) != ownPid
-                }
-                continuation.resume(returning: found)
             }
         }
     }
